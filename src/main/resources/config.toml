@@ -1,0 +1,6 @@
+[[commands]]
+name = "hello"
+
+[commands.servers.default]
+en = { premium = ["<gold>Hello, world!"] }
+es = { premium = ["<gold>¡Hola, Mundo!"] }
