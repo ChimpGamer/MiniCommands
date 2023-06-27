@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -76,7 +79,7 @@ public class Plugin {
         }
 
         for (Toml command: commandList) {
-            Map<String, Map<Locale, Map<String, List<String>>>> messages = new HashMap<>();
+            Map<String, Map<String, Map<String, List<String>>>> messages = new HashMap<>();
 
             Map<String, Object> servers = command.getTable("servers").toMap();
 
@@ -88,7 +91,7 @@ public class Plugin {
                     messages.put(serverName, new HashMap<>());
                 }
 
-                translations.forEach((locale, message) -> messages.get(serverName).put(new Locale(locale), message));
+                translations.forEach((locale, message) -> messages.get(serverName).put(locale, message));
             });
 
             Plugin.commandMap.put(command.getString("name"), new Command(
@@ -116,9 +119,9 @@ public class Plugin {
     protected static class Command {
         public String name;
         // <server -> <locale -> <premium/cracked -> string>>>
-        public Map<String, Map<Locale, Map<String, List<String>>>> messages;
+        public Map<String, Map<String, Map<String, List<String>>>> messages;
 
-        private Command(String name, Map<String, Map<Locale, Map<String, List<String>>>> messages) {
+        private Command(String name, Map<String, Map<String, Map<String, List<String>>>> messages) {
             this.name = name;
             this.messages = messages;
         }

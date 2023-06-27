@@ -29,7 +29,7 @@ public class MiniCommand implements RawCommand {
 
         var command = Plugin.commandMap.get(alias);
         var server = "default";
-        var locale = new Locale("en");
+        var locale = Locale.ENGLISH;
         var premium = true;
 
         if (source instanceof Player) {
@@ -39,7 +39,7 @@ public class MiniCommand implements RawCommand {
             }
 
             var playerLocale = ((Player) source).getEffectiveLocale();
-            if (playerLocale != null) locale = playerLocale;
+            if (playerLocale != null) locale = playerLocale.stripExtensions();
 
             premium = ((Player) source).isOnlineMode();
         }
@@ -49,25 +49,29 @@ public class MiniCommand implements RawCommand {
             server = "default";
         }
 
-        Map<Locale, Map<String, List<String>>> serverMessages = command.messages.get(server);
-
-        final var finalLocale = locale;
+        Map<String, Map<String, List<String>>> serverMessages = command.messages.get(server);
 
         List<String> messages = null;
-        do {
-            var potentialMessageSetLocale = serverMessages.keySet().stream().filter(key -> key.getLanguage().equals(finalLocale.getLanguage())).findFirst();
-            if (potentialMessageSetLocale.isEmpty()) {
-                locale = new Locale("en");
-                continue;
+
+        while (true) {
+            var finalLocale = locale;
+
+            if (!serverMessages.containsKey(finalLocale.getLanguage())) {
+                if (!locale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
+                    locale = Locale.ENGLISH;
+                    continue;
+                }
+
+                break;
             }
 
-            var messageSet = serverMessages.get(potentialMessageSetLocale.get());
+            var messageSet = serverMessages.get(finalLocale.getLanguage());
 
             if (!messageSet.containsKey("cracked")) premium = true;
             messages = messageSet.get(premium ? "premium" : "cracked");
 
             break;
-        } while (!locale.getLanguage().equals(new Locale("en").getLanguage()));
+        }
 
         if (messages == null) {
             source.sendMessage(
