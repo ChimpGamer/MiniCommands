@@ -7,6 +7,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import java.util.List;
 import java.util.Locale;
@@ -80,7 +81,12 @@ public class MiniCommand implements RawCommand {
         }
 
         for (var message: messages) {
-            source.sendMessage(miniMessage.deserialize(message));
+            var username = source instanceof Player ? ((Player) source).getUsername() : "Console";
+
+            var component = miniMessage.deserialize(message,
+                    Placeholder.component("name", Component.text(username)));
+
+            source.sendMessage(component);
         }
     }
 }

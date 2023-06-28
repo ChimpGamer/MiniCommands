@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,12 +91,16 @@ public class Plugin {
                 translations.forEach((locale, message) -> messages.get(serverName).put(locale, message));
             });
 
-            Plugin.commandMap.put(command.getString("name"), new Command(
-                    command.getString("name"),
-                    messages
-            ));
+            var cmd = new Command(command.getString("name"), messages);
+
+            Plugin.commandMap.put(command.getString("name"), cmd);
 
             logger.log(Level.INFO, "Defined command " + command.getString("name"));
+
+            command.getList("aliases", new ArrayList<String>()).forEach(alias -> {
+                Plugin.commandMap.put(alias, cmd);
+                logger.log(Level.INFO, "...and alias " + alias);
+            });
         }
 
         var aliases = Plugin.commandMap.keySet().toArray(String[]::new);
