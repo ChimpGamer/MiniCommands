@@ -22,6 +22,11 @@ dependencies {
     annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 tasks {
     runVelocity {
         velocityVersion("3.2.0-SNAPSHOT")
