@@ -6,6 +6,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 public class MiniPlaceholdersModule {
     public static TagResolver getTagResolver(Audience audience) {
-        return MiniPlaceholders.getAudiencePlaceholders(audience);
+        return TagResolver.resolver(
+                MiniPlaceholders.getGlobalPlaceholders(),
+                MiniPlaceholders.getAudiencePlaceholders(audience)
+        );
     }
 }
