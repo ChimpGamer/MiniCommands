@@ -1,34 +1,38 @@
-package org.sbst.minicommands;
+package net.blockhost.minicommands;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.RawCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
+import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-public class MiniCommand implements RawCommand {
+@RequiredArgsConstructor
+public class MiniCommandRegistration implements RawCommand {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final MiniCommand plugin;
 
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
         String alias = invocation.alias();
 
-        if (!Plugin.commandMap.containsKey(alias)) {
+        if (!plugin.getCommandMap().containsKey(alias)) {
             source.sendMessage(
                     Component.text(String.format("Unknown message %s", alias), NamedTextColor.RED));
             return;
         }
 
-        var command = Plugin.commandMap.get(alias);
+        var command = plugin.getCommandMap().get(alias);
         var server = "default";
         var locale = Locale.ENGLISH;
         var premium = true;
@@ -45,12 +49,12 @@ public class MiniCommand implements RawCommand {
             premium = ((Player) source).isOnlineMode();
         }
 
-        if (!command.messages.containsKey(server)) {
+        if (!command.messages().containsKey(server)) {
             // no server specific messages here, just get the default set
             server = "default";
         }
 
-        Map<String, Map<String, List<String>>> serverMessages = command.messages.get(server);
+        Map<String, Map<String, List<String>>> serverMessages = command.messages().get(server);
 
         List<String> messages = null;
 
@@ -76,15 +80,19 @@ public class MiniCommand implements RawCommand {
 
         if (messages == null) {
             source.sendMessage(
-                    Component.text("Failed to get message (no base translation specified for English?)", NamedTextColor.RED));
+                    Component.text("Failed to get message (No base translation specified for English?)", NamedTextColor.RED));
             return;
         }
 
-        for (var message: messages) {
-            var username = source instanceof Player ? ((Player) source).getUsername() : "Console";
+        for (var message : messages) {
+            var username = source instanceof Player player ? player.getUsername() : "Console";
 
-            var component = miniMessage.deserialize(message,
-                    Placeholder.component("name", Component.text(username)));
+            TagResolver resolver = Placeholder.component("name", Component.text(username));
+            if (plugin.getServer().getPluginManager().isLoaded("miniplaceholders")) {
+                resolver = TagResolver.resolver(MiniPlaceholdersModule.getTagResolver(source), resolver);
+            }
+
+            var component = miniMessage.deserialize(message, resolver);
 
             source.sendMessage(component);
         }

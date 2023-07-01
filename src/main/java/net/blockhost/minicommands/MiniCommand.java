@@ -1,18 +1,23 @@
-package org.sbst.minicommands;
+package net.blockhost.minicommands;
 
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import lombok.Getter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,17 +26,22 @@ import java.util.logging.Logger;
         name = "MiniCommands",
         version = "1.0-SNAPSHOT",
         description = "Simple text based responses.",
-        authors = {"lewisakura"}
+        authors = {"lewisakura"},
+        dependencies = {
+                @Dependency(id = "miniplaceholders", optional = true)
+        }
 )
-public class Plugin {
+public class MiniCommand {
+    @Getter
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
 
-    protected static Map<String, Command> commandMap = new HashMap<>();
+    @Getter
+    private final Map<String, CommandMeta> commandMap = new HashMap<>();
 
     @Inject
-    public Plugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
+    public MiniCommand(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
@@ -91,19 +101,15 @@ public class Plugin {
                 translations.forEach((locale, message) -> messages.get(serverName).put(locale, message));
             });
 
-            var cmd = new Command(command.getString("name"), messages);
-
-            Plugin.commandMap.put(command.getString("name"), cmd);
+            this.commandMap.put(command.getString("name"), new CommandMeta(
+                    command.getString("name"),
+                    messages
+            ));
 
             logger.log(Level.INFO, "Defined command " + command.getString("name"));
-
-            command.getList("aliases", new ArrayList<String>()).forEach(alias -> {
-                Plugin.commandMap.put(alias, cmd);
-                logger.log(Level.INFO, "...and alias " + alias);
-            });
         }
 
-        var aliases = Plugin.commandMap.keySet().toArray(String[]::new);
+        var aliases = this.commandMap.keySet().toArray(String[]::new);
 
         var commandManager = server.getCommandManager();
         var meta = commandManager.metaBuilder(aliases[0])
@@ -112,19 +118,12 @@ public class Plugin {
                 .plugin(this)
                 .build();
 
-        commandManager.register(meta, new MiniCommand());
+        commandManager.register(meta, new MiniCommandRegistration(this));
 
         logger.log(Level.INFO, "Commands registered, good to go");
     }
 
-    protected static class Command {
-        public String name;
-        // <server -> <locale -> <premium/cracked -> string>>>
-        public Map<String, Map<String, Map<String, List<String>>>> messages;
-
-        private Command(String name, Map<String, Map<String, Map<String, List<String>>>> messages) {
-            this.name = name;
-            this.messages = messages;
-        }
+    // <server -> <locale -> <premium/cracked -> string>>>
+    protected record CommandMeta(String name, Map<String, Map<String, Map<String, List<String>>>> messages) {
     }
 }
