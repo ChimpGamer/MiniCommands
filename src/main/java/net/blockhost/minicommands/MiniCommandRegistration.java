@@ -87,7 +87,7 @@ public class MiniCommandRegistration implements RawCommand {
         for (var message : messages) {
             var username = source instanceof Player player ? player.getUsername() : "Console";
 
-            TagResolver resolver = Placeholder.component("name", Component.text(username));
+            TagResolver resolver = Placeholder.parsed("name", username);
             if (plugin.getServer().getPluginManager().isLoaded("miniplaceholders")) {
                 resolver = TagResolver.resolver(MiniPlaceholdersModule.getTagResolver(source), resolver);
             }
