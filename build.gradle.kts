@@ -1,6 +1,6 @@
 plugins {
     java
-    id("xyz.jpenilla.run-velocity") version "2.1.0"
+    id("xyz.jpenilla.run-velocity") version "2.3.1"
 }
 
 group = "net.blockhost"
@@ -22,11 +22,11 @@ dependencies {
     compileOnly("com.velocitypowered:velocity-api:3.1.1")
     annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
 
-    compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
-    compileOnly("io.github.miniplaceholders:miniplaceholders-api:2.2.0")
+    compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
+    compileOnly("io.github.miniplaceholders:miniplaceholders-api:2.2.3")
 
-    compileOnly("org.projectlombok:lombok:1.18.28")
-    annotationProcessor("org.projectlombok:lombok:1.18.28")
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
 }
 
 tasks {
