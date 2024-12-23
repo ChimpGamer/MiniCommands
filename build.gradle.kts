@@ -22,7 +22,7 @@ dependencies {
     compileOnly("com.velocitypowered:velocity-api:3.1.1")
     annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
 
-    compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
+    compileOnly("net.kyori:adventure-text-minimessage:4.18.0")
     compileOnly("io.github.miniplaceholders:miniplaceholders-api:2.2.3")
 
     compileOnly("org.projectlombok:lombok:1.18.36")
