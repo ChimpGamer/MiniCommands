@@ -7,7 +7,6 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
@@ -18,7 +17,6 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public class MiniCommandRegistration implements RawCommand {
-    private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final MiniCommand plugin;
 
     @Override
@@ -92,7 +90,7 @@ public class MiniCommandRegistration implements RawCommand {
                 resolver = TagResolver.resolver(MiniPlaceholdersModule.getTagResolver(source), resolver);
             }
 
-            var component = miniMessage.deserialize(message, resolver);
+            var component = plugin.getMiniMessage().deserialize(message, resolver);
 
             source.sendMessage(component);
         }

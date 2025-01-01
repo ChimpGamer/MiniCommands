@@ -2,12 +2,14 @@ package net.blockhost.minicommands;
 
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,17 +42,22 @@ public class MiniCommand {
     @Getter
     private final Map<String, CommandMeta> commandMap = new HashMap<>();
 
+    private final Path config;
+
+    @Getter
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
+
     @Inject
     public MiniCommand(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
+
+        this.config = dataDirectory.resolve("config.toml");
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent e) {
-        Path config = dataDirectory.resolve("config.toml");
-
         if (!Files.exists(dataDirectory)) {
             try {
                 Files.createDirectory(dataDirectory);
@@ -70,11 +77,28 @@ public class MiniCommand {
             }
         }
 
+        var commandManager = server.getCommandManager();
+        var meta = commandManager.metaBuilder("minicommands")
+                // remove the first alias
+                .plugin(this)
+                .build();
+
+        commandManager.register(meta, (SimpleCommand) invocation -> {
+            reload();
+            invocation.source().sendMessage(miniMessage.deserialize("<green>Reloaded config!"));
+        });
+
+        loadConfig();
+
+        registerCommands();
+    }
+
+    private void loadConfig() {
         Toml toml;
         try (BufferedReader reader = Files.newBufferedReader(config)) {
             toml = new Toml().read(reader);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Could not read config file, skipping initialization", ex);
+            logger.log(Level.SEVERE, "Could not read config file", ex);
             return;
         }
 
@@ -108,7 +132,23 @@ public class MiniCommand {
 
             logger.log(Level.INFO, "Defined command " + command.getString("name"));
         }
+    }
 
+    private void unregisterAllCommands() {
+        var commandManager = server.getCommandManager();
+        for (var command : this.commandMap.keySet()) {
+            var commandMeta = commandManager.getCommandMeta(command);
+            if (commandMeta == null) {
+                logger.warning("Tried to unregister command " + command + " but it is not registered!");
+                return;
+            }
+            server.getCommandManager().unregister(commandMeta);
+            this.commandMap.remove(command);
+            logger.info("Unregistered command " + command);
+        }
+    }
+
+    private void registerCommands() {
         var aliases = this.commandMap.keySet().toArray(String[]::new);
 
         var commandManager = server.getCommandManager();
@@ -121,6 +161,12 @@ public class MiniCommand {
         commandManager.register(meta, new MiniCommandRegistration(this));
 
         logger.log(Level.INFO, "Commands registered, good to go");
+    }
+
+    public void reload() {
+        unregisterAllCommands();
+        loadConfig();
+        registerCommands();
     }
 
     // <server -> <locale -> <premium/cracked -> string>>>
