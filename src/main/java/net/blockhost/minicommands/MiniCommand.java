@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,7 +76,6 @@ public class MiniCommand {
 
         var commandManager = server.getCommandManager();
         var meta = commandManager.metaBuilder("minicommands")
-                // remove the first alias
                 .plugin(this)
                 .build();
 
@@ -136,7 +132,8 @@ public class MiniCommand {
 
     private void unregisterAllCommands() {
         var commandManager = server.getCommandManager();
-        for (var command : this.commandMap.keySet()) {
+        Set<String> commandNames = Set.copyOf(this.commandMap.keySet());
+        for (var command : commandNames) {
             var commandMeta = commandManager.getCommandMeta(command);
             if (commandMeta == null) {
                 logger.warning("Tried to unregister command " + command + " but it is not registered!");
